@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taxfix Agent — Prototype</title>
+<style>
+  :root {
+    --ink: #173C43; --teal: #1B4B52; --mint: #5FA9A0; --mint-soft: #E7F2F0;
+    --coral: #FF6B5B; --cream: #FBF8F3; --white: #FFFFFF; --line: #E3E0DA;
+    --gold: #F5B840; --gold-soft: rgba(245,184,64,.15); --text: #2A3335; --muted: #7B8A8C;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; background: var(--cream); color: var(--text); }
+  .btn { cursor: pointer; border: none; font-family: inherit; transition: transform .15s ease; }
+  .btn:hover { transform: scale(1.04); } .btn:active { transform: scale(.96); }
+
+  header { background: var(--ink); color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 32px; height: 32px; background: var(--mint); color: var(--ink); border-radius: 8px; display: grid; place-items: center; font-weight: 900; }
+  .logo b { font-size: 14px; letter-spacing: .5px; } .logo b i { color: var(--mint); font-style: normal; }
+  .logo small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,.55); }
+  .status { display: flex; align-items: center; gap: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 99px; padding: 5px 12px; font-size: 11px; font-weight: 700; background: var(--mint-soft); color: var(--teal); }
+  .pill.gold { background: var(--gold-soft); }
+  .pill.coral { background: rgba(255,107,91,.18); color: var(--coral); }
+  .avatar { width: 32px; height: 32px; border-radius: 99px; background: var(--coral); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
+  .muted { color: var(--muted); }
+
+  .profile { display: flex; align-items: center; gap: 12px; }
+  .pfp { width: 48px; height: 48px; border-radius: 16px; background: var(--mint-soft); display: grid; place-items: center; font-size: 22px; }
+  .profile b { color: var(--ink); } .profile .sub { font-size: 12px; color: var(--muted); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; text-align: center; }
+  .stat { border-radius: 16px; padding: 12px; }
+  .stat.mint { background: var(--mint-soft); } .stat.coral { background: rgba(255,107,91,.1); }
+  .stat .lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+  .stat .val { font-size: 18px; font-weight: 800; color: var(--teal); margin-top: 2px; }
+  .stat.coral .val { color: var(--coral); }
+
+  .steps-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 12px; }
+  ol.steps { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .step { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .step.active, .step.done { color: var(--ink); }
+  .step-dot { width: 28px; height: 28px; border-radius: 99px; display: grid; place-items: center; background: #F1EFEA; border: 1.5px solid var(--line); font-size: 11px; font-weight: 800; }
+  .step.active .step-dot { background: var(--mint-soft); border-color: var(--mint); }
+  .step.done .step-dot { background: var(--mint-soft); border-color: var(--mint); }
+  .check { color: var(--mint); font-weight: 900; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 14px; height: 14px; border: 2.5px solid rgba(95,169,160,.3); border-top-color: var(--mint); border-radius: 99px; animation: spin .8s linear infinite; }
+
+  .bubble { background: var(--white); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; padding: 16px; font-size: 14px; box-shadow: 0 6px 24px rgba(23,60,67,.06); animation: fadeup .4s ease; }
+  .src-card { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 16px; animation: fadeup .4s ease; }
+  .src-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--mint-soft); display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .src-card .t { font-size: 14px; font-weight: 700; color: var(--ink); } .src-card .s { font-size: 12px; color: var(--muted); }
+  .src-card .grow { flex: 1; min-width: 0; }
+  .checkmark { color: var(--mint); font-size: 18px; font-weight: 900; }
+
+  .intro { text-align: center; padding: 36px 24px; }
+  .intro h1 { color: var(--ink); font-size: 24px; margin: 16px 0 8px; }
+  .intro p { max-width: 420px; margin: 0 auto; font-size: 14px; color: var(--muted); }
+  .start-btn { margin-top: 24px; background: var(--coral); color: #fff; padding: 14px 32px; border-radius: 99px; font-size: 14px; font-weight: 800; box-shadow: 0 8px 24px rgba(255,107,91,.35); }
+  .intro .hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+  .bar { height: 6px; background: #F1EFEA; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .bar > i { display: block; height: 100%; background: var(--mint); border-radius: 99px; transition: width 1.4s ease; }
+
+  .line-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; padding: 6px 0; animation: fadeup .4s ease; }
+  .line-row .val { font-weight: 700; color: var(--teal); }
+  .payslip { border-radius: 18px; padding: 14px; background: var(--mint-soft); font-size: 13px; display: flex; justify-content: space-between; margin-top: 6px; }
+  .payslip b { color: var(--teal); }
+
+  .insight { border: 2px solid var(--gold); background: var(--gold-soft); border-radius: 24px; padding: 24px; animation: fadeup .4s ease, pulse 1.6s ease infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.015); } }
+  .insight .tag { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #9A7218; }
+  .insight p { font-size: 14px; color: var(--ink); margin-top: 8px; line-height: 1.6; }
+
+  .confirm { border: 2px solid var(--coral); background: var(--white); border-radius: 24px; padding: 24px; box-shadow: 0 12px 40px rgba(255,107,91,.15); animation: fadeup .4s ease; }
+  .confirm .tag { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--coral); }
+  .confirm p { font-size: 14px; margin-top: 12px; line-height: 1.6; }
+  .recalc { border-radius: 16px; background: var(--mint-soft); color: var(--teal); padding: 12px; font-size: 14px; margin-top: 12px; }
+  .confirm-btns { display: flex; gap: 12px; margin-top: 16px; }
+  .yes-btn { flex: 1; background: var(--coral); color: #fff; padding: 12px; border-radius: 99px; font-size: 14px; font-weight: 800; }
+  .no-btn { background: transparent; border: 1.5px solid var(--line); color: var(--muted); padding: 12px 20px; border-radius: 99px; font-size: 14px; font-weight: 800; }
+
+  .action-card { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 16px; animation: fadeup .4s ease; }
+  .action-card.hot { border: 2px solid var(--coral); background: rgba(255,107,91,.06); }
+  .action-card h3 { font-size: 14px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+  .action-card p { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+  .class-change { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .cls { padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; }
+  .cls.old { background: #F1EFEA; color: var(--muted); text-decoration: line-through; }
+  .cls.new { background: var(--mint); color: #fff; }
+  .refund-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .refund-amt { font-size: 24px; font-weight: 800; color: var(--coral); }
+  .refund-btn { background: var(--coral); color: #fff; padding: 10px 20px; border-radius: 99px; font-size: 14px; font-weight: 800; }
+  .refund-btn:disabled { opacity: .6; cursor: default; transform: none; }
+
+  .done { text-align: center; border: 2px solid var(--mint); animation: fadeup .4s ease; padding: 32px 24px; }
+  .done h2 { color: var(--ink); font-size: 20px; margin-top: 12px; }
+  .done-list { max-width: 380px; margin: 20px auto 0; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+  .done-item { border-radius: 16px; padding: 12px; background: var(--mint-soft); font-size: 13px; color: var(--teal); font-weight: 700; }
+  .done-item .lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .done-item.red { background: rgba(255,107,91,.1); color: var(--coral); }
+  .replay-btn { margin-top: 20px; background: transparent; border: 1.5px solid var(--line); color: var(--ink); padding: 10px 24px; border-radius: 99px; font-size: 13px; font-weight: 800; }
+
+  footer { text-align: center; padding: 20px; font-size: 11px; color: var(--muted); }
+  @keyframes fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">T</div>
+    <div><b>taxfix<i>.</i>agent</b><small>Steuer-KI · Prototype</small></div>
+  </div>
+  <div class="status">
+    <span class="pill gold" id="agent-status">● Agent ready</span>
+    <div class="avatar"></div>
+  </div>
+</header>
+
+<main>
+  <!-- Left column -->
+  <section style="display:flex; flex-direction:column; gap:16px;">
+    <div class="card">
+      <div class="profile">
+        <div class="pfp">🧑‍💻</div>
+        <div><b>Max Mustermann</b><div class="sub">Tax year 2026 · Class IV · Munich</div></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat mint"><div class="lbl">Tax return</div><div class="val">Sep 2026</div></div>
+        <div class="stat coral"><div class="lbl">Refund</div><div class="val" id="refund-stat">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="steps-title">Agent workflow</div>
+      <ol class="steps" id="steps"></ol>
+    </div>
+  </section>
+
+  <!-- Right column -->
+  <section class="stack" id="stage">
+
+    <!-- Intro -->
+    <div class="card intro" id="v-intro">
+      <div style="font-size:44px">🤖</div>
+      <h1>Let your agent do your taxes</h1>
+      <p>Watch the agent collect your data, read your documents, update your tax return — and find money you're leaving on the table.</p>
+      <button class="btn start-btn" onclick="start()">▶ Start agent demo</button>
+      <div class="hint">Fully clickable — no real data, just a prototype.</div>
+    </div>
+
+    <!-- Phase: collect -->
+    <div id="v-collect" class="stack hidden">
+      <div class="bubble">Hi Max 👋 I'm collecting your financial data for September. Hang tight — this takes a few seconds.</div>
+      <div class="src-card"><div class="src-icon">🏦</div><div class="grow"><div class="t">Bank account · Sparkasse</div><div class="s">Connecting via PSD2 · 128 transactions</div></div><div class="spinner"></div></div>
+      <div class="src-card"><div class="src-icon">💼</div><div class="grow"><div class="t">HR software · Personio</div><div class="s">Fetching payslips Jul–Sep 2026</div></div><div class="spinner"></div></div>
+      <div class="src-card"><div class="src-icon">📧</div><div class="grow"><div class="t">Email inbox · invoices</div><div class="s">3 invoice PDFs detected</div></div><div class="spinner"></div></div>
+    </div>
+
+    <!-- Phase: extract -->
+    <div id="v-extract" class="stack hidden">
+      <div class="bubble">Connected ✅ Now I'm reading your documents and extracting the relevant tax information.</div>
+      <div class="card"><div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink)"><span>📄 payslip_sep2026.pdf</span><span class="muted">100%</span></div><div class="muted" style="font-size:12px; margin-top:2px">Gross 4.820 € · Lohnsteuer 1.227 €</div><div class="bar"><i style="width:0%" data-w="100%"></i></div></div>
+      <div class="card"><div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink)"><span>📄 Invoice_DEX-2214.pdf</span><span class="muted">78%</span></div><div class="muted" style="font-size:12px; margin-top:2px">School fees · 1.800 € · 2 children</div><div class="bar"><i style="width:0%" data-w="78%"></i></div></div>
+      <div class="card"><div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink)"><span>📄 Policy_Gothaer.pdf</span><span class="muted">45%</span></div><div class="muted" style="font-size:12px; margin-top:2px">New insurance contracted · 42,50 €/mo</div><div class="bar"><i style="width:0%" data-w="45%"></i></div></div>
+    </div>
+
+    <!-- Phase: update -->
+    <div id="v-update" class="stack hidden">
+      <div class="bubble">Extraction done ✅ Your 2026 tax return is now updated through September. Here's what changed:</div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <b style="color:var(--ink); font-size:14px">Tax return · 2026</b><span class="pill">up to Sep</span>
+        </div>
+        <div class="line-row"><span>Salary contributions (Jan–Sep) <span class="pill">UPDATED</span></span><span class="val">11.050,89 €</span></div>
+        <div class="line-row"><span>School fees · Bildungskosten <span class="pill gold">NEW</span></span><span class="val">1.800,00 €</span></div>
+        <div class="line-row"><span>New insurance · Haftpflicht+Hausrat <span class="pill gold">NEW</span></span><span class="val">42,50 €/mo</span></div>
+        <div class="line-row"><span>Employer benefits (Kindergeld)</span><span class="val">—</span></div>
+      </div>
+      <div class="card" style="background:var(--mint-soft); border:none">
+        <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--teal)">Recent payslips</div>
+        <div class="payslip"><span>Jul 2026 · HR · Personio</span><b>3.114,62 €</b></div>
+        <div class="payslip"><span>Aug 2026 · HR · Personio</span><b>3.118,90 €</b></div>
+        <div class="payslip"><span>Sep 2026 · HR · Personio</span><b>3.121,04 €</b></div>
+      </div>
+    </div>
+
+    <!-- Phase: detect -->
+    <div id="v-detect" class="insight hidden">
+      <div style="font-size:32px">💡</div>
+      <div class="tag">Insight detected</div>
+      <p>I noticed that <b>Sarah (your partner)</b> has been receiving <b>maternity allowance (Mutterschaftsgeld)</b> since August — she appears to be out of work.</p>
+      <p class="muted" style="font-size:13px">This can significantly change your joint tax situation. Shall I take a closer look?</p>
+    </div>
+
+    <!-- Phase: confirm -->
+    <div id="v-confirm" class="confirm hidden">
+      <div class="tag">✋ Your confirmation needed</div>
+      <p>Sarah is receiving <b>maternity allowance</b> since 01.08.2026 (confirmed via bank transaction + ELERS notification). Her income for 2026 will be reduced accordingly.</p>
+      <div class="recalc">Recalculating your joint tax: <b>estimated liability − 1.483 €</b> this year.</div>
+      <div class="confirm-btns">
+        <button class="btn yes-btn" onclick="confirmPartner()">✔ Yes, that's correct</button>
+        <button class="btn no-btn" onclick="confirmPartner()">No</button>
+      </div>
+    </div>
+
+    <!-- Phase: actions -->
+    <div id="v-actions" class="stack hidden">
+      <div class="bubble">Great — recalculated ✅ Based on the new situation, I recommend two actions that will save you money right away:</div>
+      <div class="action-card">
+        <h3>1 · Update tax class (IV → III) <span class="pill">recommended</span></h3>
+        <p>Since Sarah is out of work, you should claim the tax-free allowance (Steuerfreibetrag) that she held before. I'll file the class change with the Finanzamt.</p>
+        <div class="class-change"><span class="cls old">Class IV</span><span style="color:var(--mint); font-weight:800">→</span><span class="cls new">Class III ✓</span></div>
+      </div>
+      <div class="action-card hot">
+        <h3>2 · Immediate tax refund</h3>
+        <p>Your tax liability is declining because Sarah is out of work. Instead of waiting for next year's assessment, I can trigger an immediate refund.</p>
+        <div class="refund-row">
+          <span class="refund-amt">+ 200,00 €</span>
+          <button class="btn refund-btn" id="refund-btn" onclick="issueRefund()">Process refund</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase: done -->
+    <div id="v-done" class="card done hidden">
+      <div style="font-size:44px">🎉</div>
+      <h2>All done, Max!</h2>
+      <div class="done-list">
+        <div class="done-item"><div class="lbl">Tax return</div>Updated through September 2026 ✓</div>
+        <div class="done-item"><div class="lbl">Tax class</div>Changed IV → III · filed with Finanzamt ✓</div>
+        <div class="done-item red"><div class="lbl">Immediate refund</div>200,00 € on the way to your Sparkasse account ✓</div>
+      </div>
+      <button class="btn replay-btn" onclick="reset()">↺ Replay demo</button>
+    </div>
+
+  </section>
+</main>
+
+<footer>Prototype for presentation · fictional data · Taxfix-style design</footer>
+
+<script>
+  var PHASES = [
+    { key: "collect", title: "Collecting your data" },
+    { key: "extract", title: "Reading documents" },
+    { key: "update", title: "Updating your tax return" },
+    { key: "detect", title: "Insight detected" },
+    { key: "confirm", title: "Confirm with you" },
+    { key: "actions", title: "Taking action" },
+    { key: "done", title: "All done" }
+  ];
+  var phase = -1, timers = [];
+  var views = ["intro","collect","extract","update","detect","confirm","actions","done"];
+
+  function $(id) { return document.getElementById(id); }
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function show(key) {
+    views.forEach(function(v) { $("v-" + v).classList.add("hidden"); });
+    if (key) $("v-" + key).classList.remove("hidden");
+  }
+  function renderSteps() {
+    var html = "";
+    PHASES.forEach(function(p, i) {
+      var cls = i === phase ? "active" : (i < phase || phase === 6) ? "done" : "";
+      var dot = (i < phase || phase === 6) ? '<span class="check">✓</span>' : (i === phase ? '<span class="spinner"></span>' : (i + 1));
+      html += '<li class="step ' + cls + '"><span class="step-dot">' + dot + '</span>' + p.title + '</li>';
+    });
+    $("steps").innerHTML = html;
+  }
+  function go(i, viewKey, delay) {
+    timers.push(setTimeout(function() {
+      phase = i; renderSteps(); show(viewKey);
+      if (viewKey === "extract") {
+        document.querySelectorAll("#v-extract .bar > i").forEach(function(el) {
+          el.style.width = "0%";
+          setTimeout(function() { el.style.width = el.getAttribute("data-w"); }, 60);
+        });
+      }
+    }, delay));
+  }
+  function start() {
+    clearTimers(); phase = 0; renderSteps(); show("collect");
+    $("agent-status").textContent = "● Agent working…";
+    go(1, "extract", 2600);
+    go(2, "update", 5200);
+    go(3, "detect", 8200);
+    go(4, "confirm", 10600);
+  }
+  function confirmPartner() {
+    clearTimers(); phase = 5; renderSteps(); show("actions");
+  }
+  function issueRefund() {
+    var btn = $("refund-btn");
+    btn.disabled = true; btn.textContent = "✓ Refund issued";
+    $("refund-stat").textContent = "200,00 €";
+    timers.push(setTimeout(function() { phase = 6; renderSteps(); show("done"); $("agent-status").textContent = "● Agent idle"; }, 1400));
+  }
+  function reset() {
+    clearTimers(); phase = -1; renderSteps(); show("intro");
+    $("agent-status").textContent = "● Agent ready";
+    $("refund-stat").textContent = "—";
+    var btn = $("refund-btn"); btn.disabled = false; btn.textContent = "Process refund";
+  }
+  renderSteps();
+</script>
+</body>
+</html>
